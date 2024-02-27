@@ -1,3 +1,4 @@
+import { Buff } from "./buffs/Buff";
 import { ScientificNumber } from "./scientificNumber/ScientificNumber";
 import { ScientificNumberCalculator } from "./scientificNumber/ScientificNumberCalculator";
 
@@ -5,10 +6,17 @@ export class Building {
   private _baseTickSpeed = 10;
   private _baseIncome = new ScientificNumber(1);
 
+  public isBuyable = false;
+
   constructor(
     public id: string,
     public name: string,
-    public level: number = 1,
+    public description: string,
+    public buff: Buff,
+    public level: number = 0,
+    public buyCost = new ScientificNumber(10),
+    public incomeBonus: number = 1,
+    public speedProductionBonus: number = 1,
     public gameLoopId: number | null = null
   ) {}
 
@@ -18,6 +26,15 @@ export class Building {
 
   get tickSpeed() {
     return this._baseTickSpeed * this.level;
+  }
+
+  get cost() {
+    return this.level === 0
+      ? this.buyCost
+      : ScientificNumberCalculator.multiply(
+          this.buyCost,
+          (this.level * 0.6) ^ 2
+        );
   }
 
   /**

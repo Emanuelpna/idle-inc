@@ -28,34 +28,36 @@ export const useBuildingsStore = defineStore("buildings", {
       this.buildings.set(building.id, building);
     },
     buyBuilding(id: string) {
-      console.log({ id });
-
       if (this.activeBuildings.has(id)) return;
 
-      const building = this.buildings.get(id);
+      const building = this.buildings.get(id) as Building;
 
       if (!building) return;
-
-      this.activeBuildings.set(building.id, building);
 
       const bankStore = useBankStore();
 
-      console.log(building.tickSpeed * 1000);
+      bankStore.deductCoins(building.cost);
 
-      const gameLoopId = setInterval(() => {
-        console.log({ income: building.income });
+      building.bumpLevel(1);
 
-        bankStore.addIncomeToCoinsQueue(building.income as ScientificNumber);
-      }, 1000);
+      this.activeBuildings.set(building.id, building);
 
-      building.setGameLoopId(gameLoopId);
+      this.resetBuildingLoop(building);
     },
     increaseBuildingLevel(id: string, quantity: number) {
-      const building = this.buildings.get(id);
+      const building = this.buildings.get(id) as Building;
 
       if (!building) return;
 
-      building.bumpLevel(quantity);
+      const bankStore = useBankStore();
+
+      for (let index = 0; index < quantity; index++) {
+        bankStore.deductCoins(building.cost);
+
+        building.bumpLevel(1);
+      }
+
+      this.resetBuildingLoop(building);
     },
     resetBuilding(buildingId: string) {
       this.activeBuildings.delete(buildingId);
@@ -65,6 +67,21 @@ export const useBuildingsStore = defineStore("buildings", {
       if (!building) return;
 
       building.resetBuilding();
+    },
+    resetBuildingLoop(building: Building) {
+      const bankStore = useBankStore();
+
+      bankStore.addMultipliers(
+        "speedProduction",
+        building.speedProductionBonus
+      );
+      bankStore.addMultipliers("income", building.incomeBonus);
+
+      const gameLoopId = setInterval(() => {
+        bankStore.addIncomeToCoinsQueue(building.income as ScientificNumber);
+      }, 1000 * bankStore.multiplier.getSpeedProductionMultipliers() * building.buff.multiplier.getSpeedProductionMultipliers());
+
+      building.setGameLoopId(gameLoopId);
     },
   },
 });
