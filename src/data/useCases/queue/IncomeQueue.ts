@@ -20,4 +20,12 @@ export class IncomeQueue extends Queue<ScientificNumber> {
 
     return totalIncome;
   }
+
+  static toModel(data: IncomeQueue) {
+    const newQueue = new IncomeQueue();
+    newQueue.size = data.size;
+    newQueue._queue = data._queue;
+
+    return newQueue;
+  }
 }

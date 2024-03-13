@@ -15,8 +15,3 @@ export class Buff {
     public multiplier: Multiplier
   ) {}
 }
-
-// new Buff("Speed Production", "description");
-// new Buff("Cost Reduction", "description");
-// new Buff("Offline Production", "description");
-// new Buff("Online Production", "description");

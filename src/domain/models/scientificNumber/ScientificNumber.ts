@@ -1,6 +1,6 @@
 export class ScientificNumber {
   // The maximum a number can be before changing the expoent (i.e.: (999 x 10^2 + 1) -> 1 x 10^3)
-  private _OFFSET = 1000;
+  protected _OFFSET = 1000;
 
   constructor(public number: number = 0, public expoent: number = 0) {}
 
@@ -50,5 +50,19 @@ export class ScientificNumber {
     return this.expoent > 0
       ? `${this.number.toFixed(2)}e${this.expoent}`
       : `${this.number}`;
+  }
+
+  // public toData() {
+  //   return {
+  //     _OFFSET: this._OFFSET,
+  //     _OFFSET: this._OFFSET,
+  //     _OFFSET: this._OFFSET,
+  //   };
+  // }
+
+  static toModel(data: ScientificNumber) {
+    const newNumber = new ScientificNumber(data.number, data.expoent);
+
+    return newNumber;
   }
 }

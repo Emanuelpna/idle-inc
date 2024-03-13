@@ -5,7 +5,14 @@ import { ScientificNumber } from "../../domain/models/scientificNumber/Scientifi
 import { ScientificNumberCalculator } from "../../domain/models/scientificNumber/ScientificNumberCalculator";
 
 import { IncomeQueue } from "../../data/useCases/queue/IncomeQueue";
+import { BankRepository } from "../../data/repositories/BankRepository";
+
 import { useBuildingsStore } from "./buildingsStore";
+import { LocalStorageDatabase } from "../database/LocalStorageDatabase";
+
+const bankRepository = new BankRepository(
+  new LocalStorageDatabase<BankStoreState>()
+);
 
 interface BankStoreState {
   multiplier: Multiplier;
@@ -47,15 +54,16 @@ export const useBankStore = defineStore("bank", {
       for (const building of buildingStore.buildings.values()) {
         const buildingCost = building.cost as ScientificNumber;
 
-        const isLess = ScientificNumberCalculator.isGreaterThan(
+        const isLess = ScientificNumberCalculator.isGreaterThanOrEqual(
           coins,
           buildingCost
         );
 
-        const isGreaterThanZero = ScientificNumberCalculator.isGreaterThan(
-          ScientificNumberCalculator.subtract(coins, buildingCost),
-          0
-        );
+        const isGreaterThanZero =
+          ScientificNumberCalculator.isGreaterThanOrEqual(
+            ScientificNumberCalculator.subtract(coins, buildingCost),
+            0
+          );
 
         building.isBuyable = isLess && isGreaterThanZero;
       }
@@ -71,6 +79,18 @@ export const useBankStore = defineStore("bank", {
 
       if (type === "speedProduction")
         this.multiplier.speedProductionMultiplier *= multiplier;
+    },
+    backupData() {
+      bankRepository.save(this.$state as BankStoreState);
+    },
+    restoreData() {
+      const data = bankRepository.getAll();
+
+      if (!data) return;
+
+      this.coins = ScientificNumber.toModel(data.coins);
+      this.multiplier = Multiplier.toModel(data.multiplier);
+      this.coinsQueue = IncomeQueue.toModel(data.coinsQueue);
     },
   },
 });

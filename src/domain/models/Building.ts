@@ -12,7 +12,7 @@ export class Building {
     public id: string,
     public name: string,
     public description: string,
-    public buff: Buff,
+    public buff: Buff | null = null,
     public level: number = 0,
     public buyCost = new ScientificNumber(10),
     public incomeBonus: number = 1,

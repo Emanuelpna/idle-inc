@@ -21,4 +21,22 @@ export class Multiplier {
     this.incomeMultiplier = 1;
     this.speedProductionMultiplier = 1;
   }
+
+  static toModel(data: {
+    incomeMultiplier: number;
+    incomePrestigeMultiplier: number;
+    speedProductionMultiplier: number;
+    speedProductionPrestigeMultiplier: number;
+  }) {
+    const newMultiplier = new Multiplier(
+      data.incomeMultiplier,
+      data.speedProductionMultiplier
+    );
+
+    newMultiplier.incomePrestigeMultiplier = data.incomePrestigeMultiplier;
+    newMultiplier.speedProductionPrestigeMultiplier =
+      data.speedProductionPrestigeMultiplier;
+
+    return newMultiplier;
+  }
 }

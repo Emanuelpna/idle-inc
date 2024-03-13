@@ -1,9 +1,22 @@
 import { defineStore } from "pinia";
 
 import { Building } from "../../domain/models/Building";
-import type { ScientificNumber } from "../../domain/models/scientificNumber/ScientificNumber";
+import { ScientificNumber } from "../../domain/models/scientificNumber/ScientificNumber";
+
+import { BuildingsRepository } from "../../data/repositories/BuildingsRepository";
 
 import { useBankStore } from "./bankStore";
+import { LocalStorageDatabase } from "../database/LocalStorageDatabase";
+
+const bankRepository = new BuildingsRepository(
+  new LocalStorageDatabase<BuildingStoreBackup>()
+);
+
+type BuildingMapToArray = [string, Building][];
+
+interface BuildingStoreBackup {
+  activeBuildings: BuildingMapToArray;
+}
 
 interface BuildingStoreState {
   buildings: Map<string, Building>;
@@ -25,7 +38,8 @@ export const useBuildingsStore = defineStore("buildings", {
   },
   actions: {
     addBuilding(building: Building) {
-      this.buildings.set(building.id, building);
+      if (!this.buildings.has(building.id))
+        this.buildings.set(building.id, building);
     },
     buyBuilding(id: string) {
       if (this.activeBuildings.has(id)) return;
@@ -77,11 +91,31 @@ export const useBuildingsStore = defineStore("buildings", {
       );
       bankStore.addMultipliers("income", building.incomeBonus);
 
+      const buildingBuffSpeedProductionMultiplier =
+        building.buff?.multiplier.getSpeedProductionMultipliers() ?? 1;
+
       const gameLoopId = setInterval(() => {
         bankStore.addIncomeToCoinsQueue(building.income as ScientificNumber);
-      }, 1000 * bankStore.multiplier.getSpeedProductionMultipliers() * building.buff.multiplier.getSpeedProductionMultipliers());
+      }, 1000 * bankStore.multiplier.getSpeedProductionMultipliers() * buildingBuffSpeedProductionMultiplier);
 
       building.setGameLoopId(gameLoopId);
+    },
+    backupData() {
+      const activeBuildings = Array.from(
+        this.activeBuildings.entries()
+      ) as BuildingMapToArray;
+
+      bankRepository.save({
+        activeBuildings,
+      });
+    },
+    restoreData() {
+      const data = bankRepository.getAll();
+
+      if (!data) return;
+
+      if (data.activeBuildings.length > 0)
+        this.activeBuildings = new Map(data.activeBuildings);
     },
   },
 });

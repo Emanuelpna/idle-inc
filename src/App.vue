@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 
-import { Buff } from "./domain/models/buffs/Buff";
-import { Building } from "./domain/models/Building";
-import { Multiplier } from "./domain/models/multipliers/Multiplier";
+import BuildingsChooser from './components/BuildingsChooser.vue'
+
 import { ScientificNumber } from './domain/models/scientificNumber/ScientificNumber';
 import { ScientificNumberCalculator } from './domain/models/scientificNumber/ScientificNumberCalculator';
+
+import { buildingsDatabase } from "./data/database/buildings";
 
 import { useBankStore } from "./infra/stores/bankStore";
 import { useBuildingsStore } from "./infra/stores/buildingsStore";
@@ -13,27 +14,50 @@ import { useBuildingsStore } from "./infra/stores/buildingsStore";
 const bankStore = useBankStore()
 const buildingsStore = useBuildingsStore()
 
-// onUnmounted
+/**
+ * TODO:
+ * - Expand the coins concept to include materials as food, wood, people, ores, stones e and
+ * - Buildings that makes critical hits to coin generation
+ * - Buildings buff it's coins generation each 50 levels
+ * - Buffs are buyed separately than buildings and can be purchased or upgraded by prestige pointes (building card opens a hole once buffs are enabled to indicate when a buff is implemented - and wich one - or not)
+ * - [MAYBE] Separate the concept of building coin generation and buffs (but make it as the building needs to be assing to the buff). So people can choose what type of currency they wanna focus for the run or for the moment (like change active buildings for a stretch to build a new building or buy something that use that specific material)
+ * - [MAYBE] Buildings that adds multipliers to how long the game is open (and another for closed)
+ * - [MAYBE] Buildings that buff game speed
+ * - [MAYBE] Building that enable Clicker Mode
+ * 
+ * PRESTIGES:
+ * - First prestige type gives bonus to base attributes (speed production and income) based on total first prestige coin earned in total lifetime on the game
+ * - First prestige coin can be used to buy the first tier buffs and second tier buildings
+ * - Second prestige type gives bonus to inhanced attributes like online/offline production and cost reduction
+ * - Second prestige coin can be used to buy second tier buffs and third tier buildings
+ * - Create other unique perks for each prestige type
+ * - [MAYBE] Create a third prestige
+ */
 
+/** Start Game Setup */
 onMounted(() => {
-  buildingsStore.addBuilding(new Building('casamata', 'Casamata', 'Prédio Casamata', new Buff(
-    "Income",
-    "Increase all income buff",
-    new Multiplier(1.05, 1)
-  ), 0, new ScientificNumber(5), 1, 1))
+  // useRestoreStoresData()
 
-  buildingsStore.addBuilding(new Building('marauder', 'Marauder', 'Prédio Marauder', new Buff(
-    "Speed Production",
-    "Increase all speed production",
-    new Multiplier(1.05, 1)
-  ), 0, new ScientificNumber(10), 1, 1))
 
+  for (const building of buildingsDatabase) {
+    buildingsStore.addBuilding(building)
+  }
+})
+
+/** End Game Setup */
+onUnmounted(() => {
+  // useBackupStoresData()
+})
+
+
+/** Game Loops Setup */
+onMounted(() => {
   /** Main Game Loop */
   setInterval(() => {
     // console.log('tick')
 
     bankStore.evaluateCoinsQueue()
-  }, 100)
+  }, 1000)
 
   /** Basic Income Loop */
   setInterval(() => {
@@ -45,6 +69,8 @@ onMounted(() => {
     )
   }, 1000 * bankStore.multiplier.speedProductionPrestigeMultiplier)
 })
+
+
 
 </script>
 
@@ -58,7 +84,7 @@ onMounted(() => {
       <button class="buyed" :disabled="!building.isBuyable" :title="building.description"
         @click.prevent="() => buildingsStore.increaseBuildingLevel(building.id, 1)">
 
-        <div>
+        <div v-if="building.buff !== null">
           <span>{{ building.buff.name }}</span> -
           <span>
             {{ building.buff.multiplier.getIncomeMultipliers() * 100 }}%
@@ -79,14 +105,7 @@ onMounted(() => {
 
   <hr>
 
-  <ul>
-    <li v-for="building in buildingsStore.buildings.values()">
-      <button :disabled="!building.isBuyable" :title="building.description"
-        @click.prevent="() => buildingsStore.buyBuilding(building.id)">
-        {{ building.name }} - lvl. {{ building.level }} ({{ building.cost }} - {{ building.isBuyable }})
-      </button>
-    </li>
-  </ul>
+  <BuildingsChooser></BuildingsChooser>
 </template>
 
 <style scoped>

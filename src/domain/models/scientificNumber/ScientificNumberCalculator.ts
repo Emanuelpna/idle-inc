@@ -1,6 +1,29 @@
 import { ScientificNumber } from "./ScientificNumber";
 
 export class ScientificNumberCalculator {
+  static isGreaterThanOrEqual(
+    a: ScientificNumber,
+    b: ScientificNumber | number
+  ) {
+    if (this.isEqual(a, b)) return true;
+
+    return this.isGreaterThan(a, b);
+  }
+
+  static isLessThanOrEqual(a: ScientificNumber, b: ScientificNumber | number) {
+    const scientificB =
+      typeof b === "number" ? new ScientificNumber(b).normalize() : b;
+
+    return a.number < scientificB.number && a.expoent <= scientificB.expoent;
+  }
+
+  static isEqual(a: ScientificNumber, b: ScientificNumber | number) {
+    const scientificB =
+      typeof b === "number" ? new ScientificNumber(b).normalize() : b;
+
+    return a.number === scientificB.number && a.expoent === scientificB.expoent;
+  }
+
   static isGreaterThan(a: ScientificNumber, b: ScientificNumber | number) {
     const scientificB =
       typeof b === "number" ? new ScientificNumber(b).normalize() : b;
